@@ -20,64 +20,53 @@ mongoose
   });
 
 /**
- * # curl http://localhost:8080/firewall/rules/0000000000000001/all
-  [
-    {
-      "access_control_list": [
-        {
-          "rules": [
-            {
-              "priority": 1,
-              "dl_type": "IPv4",
-              "nw_proto": "ICMP",
-              "dl_vlan": 2,
-              "nw_src": "10.0.0.0/8",
-              "rule_id": 1,
-              "actions": "ALLOW"
-            },
-            {
-              "priority": 1,
-              "dl_type": "IPv4",
-              "nw_proto": "ICMP",
-              "nw_dst": "10.0.0.0/8",
-              "dl_vlan": 2,
-              "rule_id": 2,
-              "actions": "ALLOW"
-            }
-          ],
-          "vlan_id": 2
-        }
-      ],
-      "switch_id": "0000000000000001"
-    }
-  ]
+export interface Main {
+    switch_id:           string;
+    access_control_list: AccessControlList[];
+}
+
+export interface AccessControlList {
+    rules: Rule[];
+}
+
+export interface Rule {
+    rule_id:   number;
+    priority:  number;
+    dl_type:   string;
+    nw_src:    string;
+    nw_dst:    string;
+    nw_proto?: string;
+    actions:   string;
+}
+
  */
 
-const RuleSchema = new mongoose.Schema({
-  switch_id: String,
-  access_control_list: [
-    {
-      vlan_id: Number,
-      rules: [
-        {
-          priority: Number,
-          dl_type: String,
-          nw_proto: String,
-          dl_vlan: Number,
-          nw_src: String,
-          nw_dst: String,
-          rule_id: Number,
-          actions: String,
-        },
-      ],
-    },
-  ],
-});
+const Rules = new mongoose.Schema({
+  switch_id:String,
+  access_control_list: [AccessControlList]
+})
+
+const AccessControlList = new mongoose.Schema({
+  rules: [Rule]
+})
+
+const Rule = new mongoose.Schema({
+  rule_id:   Number,
+  priority:  Number,
+  dl_type:   String,
+  nw_src:    String,
+  nw_dst:    String,
+  nw_proto:  String,
+  actions:   String,
+})
+
+const RulesModel = mongoose.model('Rules',Rules)
 
 // Get all firewall rules
 app.get("/firewall/rules", async (req, res) => {
-  try {
+  try {e
     const response = await axios.get(`${RYU_API_URL}/firewall/rules/all`);
+    res.json(response.data)
   } catch (error) {
     console.log(error);
   }
