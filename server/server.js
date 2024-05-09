@@ -60,19 +60,28 @@ const ruleSchema = new mongoose.Schema({
   ],
 });
 
-const Rule = mongoose.model("Rule", ruleSchema);
+const RuleModel = mongoose.model("Rule", ruleSchema);
+
+// Get all firewall rules from MongoDB
+app.get("/firewall/rules/db", async (req, res) => {
+  try {
+    const rules = await RuleModel.find();
+
+    res.json(rules);
+  } catch (error) {
+    console.log(error);
+  }
+});
 
 // Get all firewall rules
 app.get("/firewall/rules", async (req, res) => {
   try {
-    e;
     const response = await axios.get(`${RYU_API_URL}/firewall/rules/all`);
 
     const rules = response.data;
 
     // Save rules to MongoDB
-    // await Rule.deleteMany({});
-    await Rule.insertMany(rules);
+    await RuleModel.insertMany(rules);
 
     res.json(rules);
   } catch (error) {
@@ -81,29 +90,24 @@ app.get("/firewall/rules", async (req, res) => {
 });
 
 // Add a new firewall rule
-app.post("/firewall/rules", (req, res) => {
+app.post("/firewall/rules", async (req, res) => {
   const data = req.body;
-  axios
-    .post(`${RYU_API_URL}/firewall/rules/all`, data)
-    .then((response) => {
-      res.json(response.data);
-    })
-    .catch((error) => {
-      res.json(error);
-    });
+  const response = await axios.post(`${RYU_API_URL}/firewall/rules/all`, data);
+
+  res.json(response.data);
 });
 
 // Delete a firewall rule
 app.delete("/firewall/rules", (req, res) => {
   const data = req.body;
-  axios
-    .delete(`${RYU_API_URL}/firewall/rules/all`, { data })
-    .then((response) => {
-      res.json(response.data);
-    })
-    .catch((error) => {
-      res.json(error);
-    });
+
+  const response = axios.delete(`${RYU_API_URL}/firewall/rules/all`, {
+    data,
+  });
+
+  // update MongoDB
+
+  res.json(response.data);
 });
 
 // Enable/Disable all switches
