@@ -41,32 +41,40 @@ export interface Rule {
 
  */
 
-const Rules = new mongoose.Schema({
-  switch_id:String,
-  access_control_list: [AccessControlList]
-})
+const ruleSchema = new mongoose.Schema({
+  switch_id: String,
+  access_control_list: [
+    {
+      rules: [
+        {
+          rule_id: Number,
+          priority: Number,
+          dl_type: String,
+          nw_src: String,
+          nw_dst: String,
+          nw_proto: String,
+          actions: String,
+        },
+      ],
+    },
+  ],
+});
 
-const AccessControlList = new mongoose.Schema({
-  rules: [Rule]
-})
-
-const Rule = new mongoose.Schema({
-  rule_id:   Number,
-  priority:  Number,
-  dl_type:   String,
-  nw_src:    String,
-  nw_dst:    String,
-  nw_proto:  String,
-  actions:   String,
-})
-
-const RulesModel = mongoose.model('Rules',Rules)
+const Rule = mongoose.model("Rule", ruleSchema);
 
 // Get all firewall rules
 app.get("/firewall/rules", async (req, res) => {
-  try {e
+  try {
+    e;
     const response = await axios.get(`${RYU_API_URL}/firewall/rules/all`);
-    res.json(response.data)
+
+    const rules = response.data;
+
+    // Save rules to MongoDB
+    // await Rule.deleteMany({});
+    await Rule.insertMany(rules);
+
+    res.json(rules);
   } catch (error) {
     console.log(error);
   }
