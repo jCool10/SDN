@@ -22,16 +22,6 @@ export interface Rule {
 
  */
 
-const mainSchema = new mongoose.Schema({
-  switch_id: String,
-  status: { type: String, default: "disable", enum: ["enable", "disable"] },
-  access_control_list: [
-    {
-      rules: { type: [ruleSchema], default: [] },
-    },
-  ],
-});
-
 const ruleSchema = new mongoose.Schema({
   rule_id: Number,
   priority: Number,
@@ -40,6 +30,16 @@ const ruleSchema = new mongoose.Schema({
   nw_dst: String,
   nw_proto: String,
   actions: String,
+});
+
+const mainSchema = new mongoose.Schema({
+  switch_id: String,
+  status: { type: String, default: "disable", enum: ["enable", "disable"] },
+  access_control_list: [
+    {
+      rules: { type: [ruleSchema], default: [] },
+    },
+  ],
 });
 
 const MainModel = mongoose.model("Main", mainSchema);
