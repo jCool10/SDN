@@ -1,46 +1,6 @@
 const express = require("express");
-const axios = require("axios");
-const cors = require("cors");
-const mongoose = require("mongoose");
-const { RuleModel, MainModel } = require("./model");
 
-const app = express();
-app.use(cors());
-
-const RYU_API_URL = "http://localhost:8080"; // Giả sử ryu-manager chạy trên cổng 8080
-const URL_DB =
-  "mongodb+srv://valentinohoang1908:valentinohoang1908@cluster0.sayhxfh.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
-
-mongoose
-  .connect(URL_DB)
-  .then(() => {
-    console.log("Connected to MongoDB");
-  })
-  .catch((error) => {
-    console.log(error);
-  });
-
-/**
-export interface Main {
-    switch_id:           string;
-    access_control_list: AccessControlList[];
-}
-
-export interface AccessControlList {
-    rules: Rule[];
-}
-
-export interface Rule {
-    rule_id:   number;
-    priority:  number;
-    dl_type:   string;
-    nw_src:    string;
-    nw_dst:    string;
-    nw_proto?: string;
-    actions:   string;
-}
-
- */
+const router = express.Router();
 
 /**
 Acquiring Enable/Disable State of All Switches
@@ -48,7 +8,7 @@ Method	GET
 URL	/firewall/module/status
  */
 
-app.get("/firewall/module/status", async (req, res) => {
+router.get("/firewall/module/status", async (req, res) => {
   try {
     const response = await axios.get(`${RYU_API_URL}/firewall/module/status`);
 
@@ -71,7 +31,7 @@ URL
 Remarks	Initial state of each switch is “disable”
 */
 
-app.put("/firewall/module/:op/:sw", async (req, res) => {
+router.put("/firewall/module/:op/:sw", async (req, res) => {
   try {
     const { op, sw } = req.params;
 
@@ -105,7 +65,7 @@ URL
 Remarks	Specification of VLAN ID is optional.
 */
 
-app.get("/firewall/rules/:sw/:vlan?", async (req, res) => {
+router.get("/firewall/rules/:sw/:vlan?", async (req, res) => {
   try {
     const { sw, vlan } = req.params;
 
@@ -168,7 +128,7 @@ When it is successfully registered, Rule ID is generated and is noted in the res
 Specification of VLAN ID is optional.
 */
 
-app.post("/firewall/rules/:sw/:vlan?", async (req, res) => {
+router.post("/firewall/rules/:sw/:vlan?", async (req, res) => {
   try {
     const { sw, vlan } = req.params;
     const data = req.body;
@@ -231,7 +191,7 @@ Data	rule_id:[ “all” | 1 - ... ]
 Remarks	Specification of VLAN ID is optional.
  */
 
-app.delete("/firewall/rules/:sw/:vlan?", async (req, res) => {
+router.delete("/firewall/rules/:sw/:vlan?", async (req, res) => {
   try {
     const { sw, vlan } = req.params;
     const data = req.body;
@@ -286,7 +246,7 @@ Method	GET
 URL	/firewall/log/status
  */
 
-app.get("/firewall/log/status", async (req, res) => {
+router.get("/firewall/log/status", async (req, res) => {
   try {
     const response = await axios.get(`${RYU_API_URL}/firewall/log/status`);
 
@@ -309,7 +269,7 @@ URL
 Remarks	Initial state of each switch is “enable”
 */
 
-app.put("/firewall/log/:op/:sw", async (req, res) => {
+router.put("/firewall/log/:op/:sw", async (req, res) => {
   try {
     const { op, sw } = req.params;
 
@@ -328,7 +288,4 @@ app.put("/firewall/log/:op/:sw", async (req, res) => {
   }
 });
 
-const PORT = 3000;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+module.exports = router;
