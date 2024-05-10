@@ -24,12 +24,16 @@ export interface Rule {
 
 const ruleSchema = new mongoose.Schema({
   rule_id: Number,
-  priority: Number,
-  dl_type: String,
-  nw_src: String,
-  nw_dst: String,
-  nw_proto: String,
-  actions: String,
+  priority: { type: Number, default: 1 },
+  dl_type: { type: String, enum: ["ARP", "IPv4", "IPv6"], default: "IPv4" },
+  nw_src: { type: String, default: "any" },
+  nw_dst: { type: String, default: "any" },
+  nw_proto: {
+    type: String,
+    enum: ["TCP", "UDP", "ICMP", "ICMPv6", "any"],
+    default: "any",
+  },
+  actions: { type: String, enum: ["ALLOW", "DENY"], default: "ALLOW" },
 });
 
 const mainSchema = new mongoose.Schema({

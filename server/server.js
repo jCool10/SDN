@@ -52,7 +52,7 @@ app.get("/firewall/module/status", async (req, res) => {
   try {
     const response = await axios.get(`${RYU_API_URL}/firewall/module/status`);
 
-    res.json(response);
+    res.json(response.data);
   } catch (error) {
     console.log(error);
   }
@@ -86,7 +86,7 @@ app.put("/firewall/module/:op/:sw", async (req, res) => {
       `${RYU_API_URL}/firewall/module/${op}/${sw}`
     );
 
-    res.json(response);
+    res.json(response.data);
   } catch (error) {
     console.log(error);
   }
@@ -114,11 +114,11 @@ app.get("/firewall/rules/:sw/:vlan?", async (req, res) => {
         `${RYU_API_URL}/firewall/rules/${sw}/${vlan}`
       );
 
-      res.json(response);
+      res.json(response.data);
     } else {
       const response = await axios.get(`${RYU_API_URL}/firewall/rules/${sw}`);
 
-      res.json(response);
+      res.json(response.data);
     }
   } catch (error) {
     console.log(error);
@@ -191,7 +191,7 @@ app.post("/firewall/rules/:sw/:vlan?", async (req, res) => {
         data
       );
 
-      res.json(response);
+      res.json(response.data);
     } else {
       if (sw === "all") {
         await MainModel.updateMany(
@@ -210,7 +210,7 @@ app.post("/firewall/rules/:sw/:vlan?", async (req, res) => {
         data
       );
 
-      res.json(response);
+      res.json(response.data);
     }
   } catch (error) {
     console.log(error);
@@ -254,7 +254,7 @@ app.delete("/firewall/rules/:sw/:vlan?", async (req, res) => {
         { data }
       );
 
-      res.json(response);
+      res.json(response.data);
     } else {
       if (sw === "all") {
         await MainModel.updateMany(
@@ -273,7 +273,7 @@ app.delete("/firewall/rules/:sw/:vlan?", async (req, res) => {
         { data }
       );
 
-      res.json(response);
+      res.json(response.data);
     }
   } catch (error) {
     console.log(error);
@@ -290,7 +290,7 @@ app.get("/firewall/log/status", async (req, res) => {
   try {
     const response = await axios.get(`${RYU_API_URL}/firewall/log/status`);
 
-    res.json(response);
+    res.json(response.data);
   } catch (error) {
     console.log(error);
   }
@@ -322,7 +322,7 @@ app.put("/firewall/log/:op/:sw", async (req, res) => {
 
     const response = await axios.put(`${RYU_API_URL}/firewall/log/${op}/${sw}`);
 
-    res.json(response);
+    res.json(response.data);
   } catch (error) {
     console.log(error);
   }
