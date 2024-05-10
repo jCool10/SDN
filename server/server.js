@@ -65,9 +65,16 @@ const RuleModel = mongoose.model("Rule", ruleSchema);
 // Get all firewall rules from MongoDB
 app.get("/firewall/rules/db", async (req, res) => {
   try {
-    const rules = await RuleModel.find();
+    const rulesDB = await RuleModel.find();
+    rulesDB.forEach(async (ruleDB)=>{
+      const rules = ruleDB.access_control_list[0].rules
 
-    res.json(rules);
+      rules.forEach(async (rule)=>{
+        await axios.post(`${RYU_API_URL}/firewall/rules/all`, rule);
+      })
+    }) 
+
+    res.json({rulesDB});
   } catch (error) {
     console.log(error);
   }
@@ -77,11 +84,6 @@ app.get("/firewall/rules/db", async (req, res) => {
 app.get("/firewall/rules", async (req, res) => {
   try {
     const response = await axios.get(`${RYU_API_URL}/firewall/rules/all`);
-
-    const rules = response.data;
-
-    // Save rules to MongoDB
-    await RuleModel.insertMany(rules);
 
     res.json(rules);
   } catch (error) {
