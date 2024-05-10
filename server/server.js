@@ -3,9 +3,12 @@ const axios = require("axios");
 const cors = require("cors");
 const mongoose = require("mongoose");
 const { RuleModel, MainModel } = require("./model");
+const bodyParser = require('body-parser')
 
 const app = express();
 app.use(cors());
+app.use(bodyParser.json({limit:'100mb'}))
+app.use(bodyParser.urlencoded({extended:true,limit:'100mb'}))
 
 const RYU_API_URL = "http://localhost:8080"; // Giả sử ryu-manager chạy trên cổng 8080
 const URL_DB =
@@ -172,6 +175,9 @@ app.post("/firewall/rules/:sw/:vlan?", async (req, res) => {
   try {
     const { sw, vlan } = req.params;
     const data = req.body;
+
+
+    console.log(data)
 
     if (vlan) {
       if (sw === "all") {
