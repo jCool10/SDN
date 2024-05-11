@@ -4,8 +4,11 @@ const cors = require("cors");
 const mongoose = require("mongoose");
 const { RuleModel, MainModel } = require("./model");
 const bodyParser = require("body-parser");
+const morgan = require("morgan")
 
 const app = express();
+
+app.use(morgan("dev"))
 app.use(cors());
 app.use(bodyParser.json({ limit: "100mb" }));
 app.use(bodyParser.urlencoded({ extended: true, limit: "100mb" }));
@@ -28,6 +31,15 @@ Acquiring Enable/Disable State of All Switches
 Method	GET
 URL	/firewall/module/status
  */
+
+app.get('/',(req,res)=>{
+  const number =15;
+  const hex = number.toString(16)
+  console.log(hex.padStart(16,'0'))
+})
+
+
+
 
 app.get("/firewall/module/status", async (req, res) => {
   try {
