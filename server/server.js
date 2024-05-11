@@ -4,11 +4,11 @@ const cors = require("cors");
 const mongoose = require("mongoose");
 const { RuleModel, MainModel } = require("./model");
 const bodyParser = require("body-parser");
-const morgan = require("morgan")
+const morgan = require("morgan");
 
 const app = express();
 
-app.use(morgan("dev"))
+app.use(morgan("dev"));
 app.use(cors());
 app.use(bodyParser.json({ limit: "100mb" }));
 app.use(bodyParser.urlencoded({ extended: true, limit: "100mb" }));
@@ -26,21 +26,37 @@ mongoose
     console.log(error);
   });
 
+const toPaddedHexString = (number) => {
+  const hex = number.toString(16);
+  return hex.padStart(16, "0");
+};
+
+/**
+ Get all switches
+ Method GET
+ URL 	/stats/switches
+ */
+app.get("/stats/switches", async (req, res) => {
+  try {
+    const response = await axios.get(`${RYU_API_URL}/stats/switches`);
+
+    const switches = response.data;
+
+    switches.map(async (sw) => {
+      await MainModel.create({ switch_id: toPaddedHexString(sw) });
+    });
+
+    res.json(switches);
+  } catch (error) {
+    console.log(error);
+  }
+});
+
 /**
 Acquiring Enable/Disable State of All Switches
 Method	GET
 URL	/firewall/module/status
  */
-
-app.get('/',(req,res)=>{
-  const number =15;
-  const hex = number.toString(16)
-  console.log(hex.padStart(16,'0'))
-})
-
-
-
-
 app.get("/firewall/module/status", async (req, res) => {
   try {
     const response = await axios.get(`${RYU_API_URL}/firewall/module/status`);
