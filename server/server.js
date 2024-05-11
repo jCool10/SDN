@@ -3,12 +3,12 @@ const axios = require("axios");
 const cors = require("cors");
 const mongoose = require("mongoose");
 const { RuleModel, MainModel } = require("./model");
-const bodyParser = require('body-parser')
+const bodyParser = require("body-parser");
 
 const app = express();
 app.use(cors());
-app.use(bodyParser.json({limit:'100mb'}))
-app.use(bodyParser.urlencoded({extended:true,limit:'100mb'}))
+app.use(bodyParser.json({ limit: "100mb" }));
+app.use(bodyParser.urlencoded({ extended: true, limit: "100mb" }));
 
 const RYU_API_URL = "http://localhost:8080"; // Giả sử ryu-manager chạy trên cổng 8080
 const URL_DB =
@@ -22,28 +22,6 @@ mongoose
   .catch((error) => {
     console.log(error);
   });
-
-/**
-export interface Main {
-    switch_id:           string;
-    access_control_list: AccessControlList[];
-}
-
-export interface AccessControlList {
-    rules: Rule[];
-}
-
-export interface Rule {
-    rule_id:   number;
-    priority:  number;
-    dl_type:   string;
-    nw_src:    string;
-    nw_dst:    string;
-    nw_proto?: string;
-    actions:   string;
-}
-
- */
 
 /**
 Acquiring Enable/Disable State of All Switches
@@ -176,9 +154,6 @@ app.post("/firewall/rules/:sw/:vlan?", async (req, res) => {
     const { sw, vlan } = req.params;
     const data = req.body;
 
-
-    console.log(data)
-
     if (vlan) {
       if (sw === "all") {
         await MainModel.updateMany(
@@ -186,10 +161,14 @@ app.post("/firewall/rules/:sw/:vlan?", async (req, res) => {
           { $push: { "access_control_list.0.rules": data } }
         );
       } else {
-        await MainModel.updateOne(
-          { switch_id: sw },
-          { $push: { "access_control_list.0.rules": data } }
-        );
+        await MainModel.create({
+          switch_id: sw,
+          access_control_list: [
+            {
+              rules: [data],
+            },
+          ],
+        });
       }
 
       const response = await axios.post(
@@ -205,10 +184,14 @@ app.post("/firewall/rules/:sw/:vlan?", async (req, res) => {
           { $push: { "access_control_list.0.rules": data } }
         );
       } else {
-        await MainModel.updateOne(
-          { switch_id: sw },
-          { $push: { "access_control_list.0.rules": data } }
-        );
+        await MainModel.create({
+          switch_id: sw,
+          access_control_list: [
+            {
+              rules: [data],
+            },
+          ],
+        });
       }
 
       const response = await axios.post(
