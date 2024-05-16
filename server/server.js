@@ -13,7 +13,9 @@ app.use(cors());
 app.use(bodyParser.json({ limit: "100mb" }));
 app.use(bodyParser.urlencoded({ extended: true, limit: "100mb" }));
 
-const RYU_API_URL = "http://localhost:8080"; // Giả sử ryu-manager chạy trên cổng 8080
+const RYU_API_URL = "http://192.168.88.107:8080"; // Giả sử ryu-manager chạy trên cổng 8080
+// const RYU_API_URL = "http://192.168.228.139:8080"; // Giả sử ryu-manager chạy trên cổng 8080
+// const RYU_API_URL = "http://localhost:8080"; // Giả sử ryu-manager chạy trên cổng 8080
 const URL_DB =
   "mongodb+srv://valentinohoang1908:valentinohoang1908@cluster0.sayhxfh.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
 
@@ -31,6 +33,42 @@ const toPaddedHexString = (number) => {
   return hex.padStart(16, "0");
 };
 
+app.get("/firewall/rules/init", async (req, res) => {
+  try {
+    const findRules = await RuleModel.find();
+
+    res.json(findRules);
+  } catch (error) {
+    console.log(error);
+  }
+});
+
+/**
+ Get ports stats
+  Method GET
+  URL /stats/port/<dpid>[/<port>]
+ */
+
+app.get("/stats/port/:dpid/:port?", async (req, res) => {
+  try {
+    const { dpid, port } = req.params;
+
+    if (port) {
+      const response = await axios.get(
+        `${RYU_API_URL}/stats/port/${dpid}/${port}`
+      );
+
+      res.json(response.data);
+    } else {
+      const response = await axios.get(`${RYU_API_URL}/stats/port/${dpid}`);
+
+      res.json(response.data);
+    }
+  } catch (error) {
+    console.log(error);
+  }
+});
+
 /**
  Get all switches
  Method GET
@@ -43,10 +81,17 @@ app.get("/stats/switches", async (req, res) => {
     const switches = response.data;
 
     switches.map(async (sw) => {
-      await MainModel.create({ switch_id: toPaddedHexString(sw) });
+      const switchHex = toPaddedHexString(sw);
+      const findSwitch = await MainModel.findOne({ switch_id: switchHex });
+
+      if (!findSwitch) {
+        await MainModel.create({ switch_id: switchHex });
+      }
     });
 
-    res.json(switches);
+    const findSwitches = await MainModel.find();
+
+    res.json(findSwitches);
   } catch (error) {
     console.log(error);
   }
@@ -182,50 +227,71 @@ app.post("/firewall/rules/:sw/:vlan?", async (req, res) => {
     const { sw, vlan } = req.params;
     const data = req.body;
 
-    if (vlan) {
-      if (sw === "all") {
-        await MainModel.updateMany(
-          {},
-          { $push: { "access_control_list.0.rules": data } }
-        );
-      } else {
-        await MainModel.create({
-          switch_id: sw,
-          access_control_list: [
-            {
-              rules: [data],
-            },
-          ],
-        });
-      }
+    const rules = { ...data };
+    delete rules.dl_type;
 
+    if (vlan) {
       const response = await axios.post(
         `${RYU_API_URL}/firewall/rules/${sw}/${vlan}`,
-        data
+        rules
       );
+
+      const ruleId =
+        response.data[0].command_result[0].details.match(/rule_id=(\d+)/);
+
+      if (sw === "all") {
+        await MainModel.findOneAndUpdate(
+          {},
+          {
+            $push: {
+              "access_control_list.0.rules": { ...rules, rule_id: ruleId },
+            },
+          },
+          { new: true }
+        );
+      } else {
+        await MainModel.findOneAndUpdate(
+          { switch_id: sw },
+          {
+            $push: {
+              "access_control_list.0.rules": { ...rules, rule_id: ruleId },
+            },
+          },
+          { new: true }
+        );
+      }
 
       res.json(response.data);
     } else {
-      if (sw === "all") {
-        await MainModel.updateMany(
-          {},
-          { $push: { "access_control_list.0.rules": data } }
-        );
-      } else {
-        await MainModel.create({
-          switch_id: sw,
-          access_control_list: [
-            {
-              rules: [data],
-            },
-          ],
-        });
-      }
-
       const response = await axios.post(
         `${RYU_API_URL}/firewall/rules/${sw}`,
-        data
+        rules
       );
+
+      const ruleId =
+        response.data[0].command_result[0].details.match(/rule_id=(\d+)/)[1];
+
+      if (sw === "all") {
+        await MainModel.findOneAndUpdate(
+          {},
+          {
+            $push: {
+              "access_control_list.0.rules": { ...rules, rule_id: ruleId },
+            },
+          },
+          { new: true }
+        );
+      } else {
+        await MainModel.findOneAndUpdate(
+          { switch_id: sw },
+          {
+            $push: {
+              "access_control_list.0.rules": { ...rules, rule_id: ruleId },
+            },
+          },
+          { new: true }
+        );
+      }
 
       res.json(response.data);
     }
@@ -251,44 +317,48 @@ Remarks	Specification of VLAN ID is optional.
 app.delete("/firewall/rules/:sw/:vlan?", async (req, res) => {
   try {
     const { sw, vlan } = req.params;
-    const data = req.body;
+    const rule_id = req.body.rule_id;
 
     if (vlan) {
+      const response = await axios.delete(
+        `${RYU_API_URL}/firewall/rules/${sw}/${vlan}`,
+        {
+          data: { rule_id },
+        }
+      );
+
       if (sw === "all") {
         await MainModel.updateMany(
           {},
-          { $pull: { "access_control_list.0.rules": data } }
+          { $pull: { "access_control_list.0.rules": { rule_id } } }
         );
       } else {
         await MainModel.updateOne(
           { switch_id: sw },
-          { $pull: { "access_control_list.0.rules": data } }
+          { $pull: { "access_control_list.0.rules": { rule_id } } }
         );
       }
-
-      const response = await axios.delete(
-        `${RYU_API_URL}/firewall/rules/${sw}/${vlan}`,
-        { data }
-      );
 
       res.json(response.data);
     } else {
+      const response = await axios.delete(
+        `${RYU_API_URL}/firewall/rules/${sw}`,
+        {
+          data: { rule_id },
+        }
+      );
+
       if (sw === "all") {
         await MainModel.updateMany(
           {},
-          { $pull: { "access_control_list.0.rules": data } }
+          { $pull: { "access_control_list.0.rules": { rule_id } } }
         );
       } else {
         await MainModel.updateOne(
           { switch_id: sw },
-          { $pull: { "access_control_list.0.rules": data } }
+          { $pull: { "access_control_list.0.rules": { rule_id } } }
         );
       }
-
-      const response = await axios.delete(
-        `${RYU_API_URL}/firewall/rules/${sw}`,
-        { data }
-      );
 
       res.json(response.data);
     }
@@ -345,7 +415,7 @@ app.put("/firewall/log/:op/:sw", async (req, res) => {
   }
 });
 
-const PORT = 3000;
+const PORT = 5000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });

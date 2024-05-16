@@ -25,9 +25,9 @@ export interface Rule {
 const ruleSchema = new mongoose.Schema({
   rule_id: Number,
   priority: { type: Number, default: 1 },
-  dl_type: { type: String, enum: ["ARP", "IPv4", "IPv6"], default: "IPv4" },
-  nw_src: { type: String, default: "any" },
-  nw_dst: { type: String, default: "any" },
+  dl_type: { type: String, enum: ["IPv4", "IPv6"], default: "IPv4" },
+  src: { type: String, default: "any" },
+  dst: { type: String, default: "any" },
   nw_proto: {
     type: String,
     enum: ["TCP", "UDP", "ICMP", "ICMPv6", "any"],
